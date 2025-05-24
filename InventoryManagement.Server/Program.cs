@@ -41,7 +41,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors("AllowAngularOrigin");
 app.UseAuthorization();
 
 app.MapControllers();

@@ -33,16 +33,16 @@ namespace InventoryManagement.Server.Controllers
         }
 
         [HttpPost("CreateProduct")]
-        public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto productDto)
+        public async Task<ActionResult<ProductDto>> CreateProduct(ProductInputDto createProductDto)
         {
-            var createdProduct = await _productService.CreateProductAsync(productDto);
+            var createdProduct = await _productService.CreateProductAsync(createProductDto);
             return Ok(createdProduct);
         }
 
         [HttpPut("UpdateProduct")]
-        public async Task<ActionResult<ProductDto>> UpdateProduct(int id, UpdateProductDto productDto)
+        public async Task<ActionResult<ProductDto>> UpdateProduct(int id, ProductInputDto updateProductDto)
         {
-            var updatedProduct = await _productService.UpdateProductAsync(id, productDto);
+            var updatedProduct = await _productService.UpdateProductAsync(id, updateProductDto);
             if (updatedProduct == null)
                 return NotFound();
 

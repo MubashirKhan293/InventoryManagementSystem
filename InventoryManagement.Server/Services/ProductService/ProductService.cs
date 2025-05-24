@@ -42,7 +42,7 @@ namespace InventoryManagement.Server.Services.ProductService
             };
         }
 
-        public async Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto)
+        public async Task<ProductDto> CreateProductAsync(ProductInputDto createProductDto)
         {
             var product = new Product
             {
@@ -65,7 +65,7 @@ namespace InventoryManagement.Server.Services.ProductService
             };
         }
 
-        public async Task<ProductDto?> UpdateProductAsync(int id, UpdateProductDto updateProductDto)
+        public async Task<ProductDto?> UpdateProductAsync(int id, ProductInputDto updateProductDto)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null) return null;

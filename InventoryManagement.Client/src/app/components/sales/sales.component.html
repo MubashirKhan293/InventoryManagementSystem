@@ -1,0 +1,155 @@
+<!-- sales.component.html -->
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <h4 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Sales Management</h4>
+          <button class="btn btn-light btn-sm" (click)="onAddSale()">
+            <i class="fas fa-plus me-1"></i>Record Sale
+          </button>
+        </div>
+        
+        <div class="card-body">
+          <!-- Search Bar -->
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" placeholder="Search sales..." 
+                       [(ngModel)]="searchTerm" (keyup)="onSearch()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Sale Form -->
+          <div class="row mb-4" *ngIf="showAddForm">
+            <div class="col-12">
+              <div class="card bg-light">
+                <div class="card-header">
+                  <h5 class="mb-0">Record New Sale</h5>
+                </div>
+                <div class="card-body">
+                  <form #saleFormRef="ngForm" (ngSubmit)="onSubmit()">
+                    <div class="row">
+                      <div class="col-md-3">
+                        <div class="mb-3">
+                          <label class="form-label">Product *</label>
+                          <select class="form-select" [(ngModel)]="saleForm.productId" 
+                                  name="productId" required #productId="ngModel">
+                            <option value="0">Select Product</option>
+                            <option *ngFor="let product of products" [value]="product.id">
+                              {{ product.name }} ({{ product.quantity }} available)
+                            </option>
+                          </select>
+                          <div class="text-danger" *ngIf="productId.invalid && productId.touched">
+                            Please select a product
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="mb-3">
+                          <label class="form-label">Quantity *</label>
+                          <input type="number" class="form-control" [(ngModel)]="saleForm.quantitySold" 
+                                 name="quantitySold" required min="1" 
+                                 #quantitySold="ngModel">
+                          <div class="text-danger" *ngIf="quantitySold.invalid && quantitySold.touched">
+                            Valid quantity required
+                          </div>
+                          <small class="text-muted" *ngIf="getSelectedProduct()">
+                            Max: {{ getSelectedProduct()?.quantity }}
+                          </small>
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="mb-3">
+                          <label class="form-label">Unit Price *</label>
+                          <input type="number" class="form-control" [(ngModel)]="saleForm.unitPrice" 
+                                 name="unitPrice" required min="0.01" step="0.01" #unitPrice="ngModel">
+                          <div class="text-danger" *ngIf="unitPrice.invalid && unitPrice.touched">
+                            Valid price required
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="mb-3">
+                          <label class="form-label">Customer Name *</label>
+                          <input type="text" class="form-control" [(ngModel)]="saleForm.customerName" 
+                                 name="customerName" required #customerName="ngModel">
+                          <div class="text-danger" *ngIf="customerName.invalid && customerName.touched">
+                            Customer name is required
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="mb-3">
+                          <label class="form-label">Total Amount</label>
+                          <input type="text" class="form-control" [value]="calculateTotal() | currency" readonly>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <button type="submit" class="btn btn-success" [disabled]="!saleFormRef.valid">
+                        <i class="fas fa-save me-1"></i>Record Sale
+                      </button>
+                      <button type="button" class="btn btn-secondary" (click)="cancelForm()">
+                        <i class="fas fa-times me-1"></i>Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales Table -->
+          <div class="table-responsive">
+            <ngx-datatable
+              class="bootstrap"
+              [rows]="filteredSales"
+              [externalPaging]="false"
+              [count]="totalElements"
+              [offset]="currentPage"
+              [limit]="pageSize"
+              (page)="onPageChange($event)"
+              [headerHeight]="50"
+              [footerHeight]="50"
+              [rowHeight]="50"
+              [loadingIndicator]="false">
+              
+              <ngx-datatable-column name="ID" prop="id" [width]="80">
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Product" prop="productName">
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Customer" prop="customerName">
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Quantity" prop="quantitySold" [width]="100">
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Unit Price" [width]="120">
+                <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
+                  {{ row.unitPrice | currency }}
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Total Amount" [width]="130">
+                <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
+                  <span class="fw-bold text-success">{{ row.totalAmount | currency }}</span>
+                </ng-template>
+              </ngx-datatable-column>
+
+              <ngx-datatable-column name="Sale Date" [width]="150">
+                <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
+                  {{ row.saleDate | date:'short' }}
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
