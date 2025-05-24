@@ -33,11 +33,11 @@ namespace InventoryManagement.Server.Controllers
         }
 
         [HttpPost("CreatePurchase")]
-        public async Task<ActionResult<PurchaseDto>> CreatePurchase(CreatePurchaseDto purchaseDto)
+        public async Task<ActionResult<PurchaseDto>> CreatePurchase(CreatePurchaseDto createPurchaseDto)
         {
             try
             {
-                var createdPurchase = await _purchaseService.CreatePurchaseAsync(purchaseDto);
+                var createdPurchase = await _purchaseService.CreatePurchaseAsync(createPurchaseDto);
                 return Ok(createdPurchase);
             }
             catch (System.Exception ex)
@@ -46,21 +46,27 @@ namespace InventoryManagement.Server.Controllers
             }
         }
 
-        [HttpPut("UpdatePurchaseStatus")]
-        public async Task<ActionResult<PurchaseDto>> UpdatePurchaseStatus(int id, UpdatePurchaseStatusDto statusDto)
+        [HttpGet("GetPurchasesByProduct")]
+        public async Task<ActionResult<IEnumerable<PurchaseDto>>> GetPurchasesByProduct(int productId)
         {
-            try
-            {
-                var updatedPurchase = await _purchaseService.UpdatePurchaseStatusAsync(id, statusDto);
-                if (updatedPurchase == null)
-                    return NotFound();
-
-                return Ok(updatedPurchase);
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            var purchases = await _purchaseService.GetPurchasesByProductIdAsync(productId);
+            return Ok(purchases);
         }
     }
+    //[HttpPut("UpdatePurchaseStatus")]
+    //public async Task<ActionResult<PurchaseDto>> UpdatePurchaseStatus(int id, UpdatePurchaseStatusDto statusDto)
+    //{
+    //    try
+    //    {
+    //        var updatedPurchase = await _purchaseService.UpdatePurchaseStatusAsync(id, statusDto);
+    //        if (updatedPurchase == null)
+    //            return NotFound();
+
+    //        return Ok(updatedPurchase);
+    //    }
+    //    catch (System.Exception ex)
+    //    {
+    //        return BadRequest(new { message = ex.Message });
+    //    }
+    //}
 }

@@ -14,25 +14,23 @@ namespace InventoryManagement.Server.Services.ProductService
             _context = context;
         }
 
-        public async Task<List<ProductDto>> GetAllProductsAsync()
+        public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
         {
-            return await _context.Products
-                .Select(p => new ProductDto
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Description = p.Description,
-                    Quantity = p.Quantity,
-                    UnitPrice = p.UnitPrice
-                })
-                .ToListAsync();
+            var products = await _context.Products.ToListAsync();
+            return products.Select(p => new ProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Quantity = p.Quantity,
+                CreatedDate = p.CreatedDate
+            });
         }
 
-        public async Task<ProductDto> GetProductByIdAsync(int id)
+        public async Task<ProductDto?> GetProductByIdAsync(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product == null)
-                return null;
+            if (product == null) return null;
 
             return new ProductDto
             {
@@ -40,20 +38,18 @@ namespace InventoryManagement.Server.Services.ProductService
                 Name = product.Name,
                 Description = product.Description,
                 Quantity = product.Quantity,
-                UnitPrice = product.UnitPrice
+                CreatedDate = product.CreatedDate
             };
         }
 
-        public async Task<ProductDto> CreateProductAsync(CreateProductDto productDto)
+        public async Task<ProductDto> CreateProductAsync(CreateProductDto createProductDto)
         {
             var product = new Product
             {
-                Name = productDto.Name,
-                Description = productDto.Description,
-                Quantity = productDto.Quantity,
-                UnitPrice = productDto.UnitPrice,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                Name = createProductDto.Name,
+                Description = createProductDto.Description,
+                Quantity = createProductDto.Quantity,
+                CreatedDate = DateTime.UtcNow
             };
 
             _context.Products.Add(product);
@@ -65,21 +61,18 @@ namespace InventoryManagement.Server.Services.ProductService
                 Name = product.Name,
                 Description = product.Description,
                 Quantity = product.Quantity,
-                UnitPrice = product.UnitPrice
+                CreatedDate = product.CreatedDate
             };
         }
 
-        public async Task<ProductDto> UpdateProductAsync(int id, UpdateProductDto productDto)
+        public async Task<ProductDto?> UpdateProductAsync(int id, UpdateProductDto updateProductDto)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product == null)
-                return null;
+            if (product == null) return null;
 
-            product.Name = productDto.Name;
-            product.Description = productDto.Description;
-            product.Quantity = productDto.Quantity;
-            product.UnitPrice = productDto.UnitPrice;
-            product.UpdatedAt = DateTime.UtcNow;
+            product.Name = updateProductDto.Name;
+            product.Description = updateProductDto.Description;
+            product.Quantity = updateProductDto.Quantity;
 
             await _context.SaveChangesAsync();
 
@@ -89,19 +82,23 @@ namespace InventoryManagement.Server.Services.ProductService
                 Name = product.Name,
                 Description = product.Description,
                 Quantity = product.Quantity,
-                UnitPrice = product.UnitPrice
+                CreatedDate = product.CreatedDate
             };
         }
 
         public async Task<bool> DeleteProductAsync(int id)
         {
             var product = await _context.Products.FindAsync(id);
-            if (product == null)
-                return false;
+            if (product == null) return false;
 
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<bool> ProductExistsAsync(int id)
+        {
+            return await _context.Products.AnyAsync(p => p.Id == id);
         }
     }
 }

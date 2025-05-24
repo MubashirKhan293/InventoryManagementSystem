@@ -46,5 +46,13 @@ namespace InventoryManagement.Server.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        // GET: api/sales/product/5
+        [HttpGet("GetSalesByProduct")]
+        public async Task<ActionResult<IEnumerable<SaleDto>>> GetSalesByProduct(int productId)
+        {
+            var sales = await _saleService.GetSalesByProductIdAsync(productId);
+            return Ok(sales);
+        }
     }
 }

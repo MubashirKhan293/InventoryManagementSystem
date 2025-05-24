@@ -4,8 +4,9 @@ namespace InventoryManagement.Server.Services.SaleService
 {
     public interface ISaleService
     {
-        Task<List<SaleDto>> GetAllSalesAsync();
-        Task<SaleDto> GetSaleByIdAsync(int id);
-        Task<SaleDto> CreateSaleAsync(CreateSaleDto saleDto);
+        Task<IEnumerable<SaleDto>> GetAllSalesAsync();
+        Task<SaleDto?> GetSaleByIdAsync(int id);
+        Task<SaleDto?> CreateSaleAsync(CreateSaleDto createSaleDto);
+        Task<IEnumerable<SaleDto>> GetSalesByProductIdAsync(int productId);
     }
 }

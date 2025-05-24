@@ -12,91 +12,76 @@ namespace InventoryManagement.Server.Context
 
         public DbSet<Product> Products { get; set; }
         public DbSet<Sale> Sales { get; set; }
-        public DbSet<SaleItem> SaleItems { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
-        public DbSet<PurchaseItem> PurchaseItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configure Product entity
-            modelBuilder.Entity<Product>()
-                .Property(p => p.Name)
-                .IsRequired()
-                .HasMaxLength(100);
+            // Product configuration
+            modelBuilder.Entity<Product>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Description).HasMaxLength(500);
+                entity.Property(e => e.CreatedDate).HasDefaultValueSql("GETUTCDATE()");
+            });
 
-            modelBuilder.Entity<Product>()
-                .Property(p => p.Description)
-                .HasMaxLength(500);
+            // Sale configuration
+            modelBuilder.Entity<Sale>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.SaleDate).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.CustomerName).HasMaxLength(200);
 
-            modelBuilder.Entity<Product>()
-                .Property(p => p.UnitPrice)
-                .HasColumnType("decimal(18,2)");
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.Sales)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
 
-            // Configure Sale entity
-            modelBuilder.Entity<Sale>()
-                .Property(s => s.CustomerName)
-                .HasMaxLength(100);
+            // Purchase configuration
+            modelBuilder.Entity<Purchase>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.PurchaseDate).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.SupplierName).HasMaxLength(200);
 
-            modelBuilder.Entity<Sale>()
-                .Property(s => s.TotalAmount)
-                .HasColumnType("decimal(18,2)");
+                entity.HasOne(e => e.Product)
+                      .WithMany(p => p.Purchases)
+                      .HasForeignKey(e => e.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
 
-            // Configure SaleItem entity
-            modelBuilder.Entity<SaleItem>()
-                .Property(si => si.UnitPrice)
-                .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<SaleItem>()
-                .Property(si => si.TotalPrice)
-                .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<SaleItem>()
-                .HasOne(si => si.Sale)
-                .WithMany(s => s.Items)
-                .HasForeignKey(si => si.SaleId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<SaleItem>()
-                .HasOne(si => si.Product)
-                .WithMany()
-                .HasForeignKey(si => si.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Configure Purchase entity
-            modelBuilder.Entity<Purchase>()
-                .Property(p => p.SupplierName)
-                .HasMaxLength(100);
-
-            modelBuilder.Entity<Purchase>()
-                .Property(p => p.TotalAmount)
-                .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<Purchase>()
-                .Property(p => p.Status)
-                .HasMaxLength(20);
-
-            // Configure PurchaseItem entity
-            modelBuilder.Entity<PurchaseItem>()
-                .Property(pi => pi.UnitPrice)
-                .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<PurchaseItem>()
-                .Property(pi => pi.TotalPrice)
-                .HasColumnType("decimal(18,2)");
-
-            modelBuilder.Entity<PurchaseItem>()
-                .HasOne(pi => pi.Purchase)
-                .WithMany(p => p.Items)
-                .HasForeignKey(pi => pi.PurchaseId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<PurchaseItem>()
-                .HasOne(pi => pi.Product)
-                .WithMany()
-                .HasForeignKey(pi => pi.ProductId)
-                .OnDelete(DeleteBehavior.Restrict);
+            // Seed data
+            modelBuilder.Entity<Product>().HasData(
+                new Product
+                {
+                    Id = 1,
+                    Name = "Laptop",
+                    Description = "Gaming laptop with high performance",
+                    Quantity = 10,
+                    CreatedDate = DateTime.UtcNow
+                },
+                new Product
+                {
+                    Id = 2,
+                    Name = "Mouse",
+                    Description = "Wireless optical mouse",
+                    Quantity = 50,
+                    CreatedDate = DateTime.UtcNow
+                },
+                new Product
+                {
+                    Id = 3,
+                    Name = "Keyboard",
+                    Description = "Mechanical gaming keyboard",
+                    Quantity = 30,
+                    CreatedDate = DateTime.UtcNow
+                }
+            );
         }
     }
 }

@@ -15,140 +15,120 @@ namespace InventoryManagement.Server.Services.SaleService
             _context = context;
         }
 
-        public async Task<List<SaleDto>> GetAllSalesAsync()
+        public async Task<IEnumerable<SaleDto>> GetAllSalesAsync()
         {
-            return await _context.Sales
-                .Include(s => s.Items)
-                .ThenInclude(si => si.Product)
-                .Select(s => new SaleDto
-                {
-                    Id = s.Id,
-                    SaleDate = s.SaleDate,
-                    CustomerName = s.CustomerName,
-                    TotalAmount = s.TotalAmount,
-                    Notes = s.Notes,
-                    Items = s.Items.Select(si => new SaleItemDto
-                    {
-                        Id = si.Id,
-                        ProductId = si.ProductId,
-                        ProductName = si.Product.Name,
-                        Quantity = si.Quantity,
-                        UnitPrice = si.UnitPrice,
-                        TotalPrice = si.TotalPrice
-                    }).ToList()
-                })
+            var sales = await _context.Sales
+                .Include(s => s.Product)
+                .OrderByDescending(s => s.SaleDate)
                 .ToListAsync();
+
+            return sales.Select(s => new SaleDto
+            {
+                Id = s.Id,
+                ProductId = s.ProductId,
+                ProductName = s.Product.Name,
+                QuantitySold = s.QuantitySold,
+                UnitPrice = s.UnitPrice,
+                TotalAmount = s.TotalAmount,
+                SaleDate = s.SaleDate,
+                CustomerName = s.CustomerName
+            });
         }
 
-        public async Task<SaleDto> GetSaleByIdAsync(int id)
+        public async Task<SaleDto?> GetSaleByIdAsync(int id)
         {
             var sale = await _context.Sales
-                .Include(s => s.Items)
-                .ThenInclude(si => si.Product)
+                .Include(s => s.Product)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
-            if (sale == null)
-                return null;
+            if (sale == null) return null;
 
             return new SaleDto
             {
                 Id = sale.Id,
-                SaleDate = sale.SaleDate,
-                CustomerName = sale.CustomerName,
+                ProductId = sale.ProductId,
+                ProductName = sale.Product.Name,
+                QuantitySold = sale.QuantitySold,
+                UnitPrice = sale.UnitPrice,
                 TotalAmount = sale.TotalAmount,
-                Notes = sale.Notes,
-                Items = sale.Items.Select(si => new SaleItemDto
-                {
-                    Id = si.Id,
-                    ProductId = si.ProductId,
-                    ProductName = si.Product.Name,
-                    Quantity = si.Quantity,
-                    UnitPrice = si.UnitPrice,
-                    TotalPrice = si.TotalPrice
-                }).ToList()
+                SaleDate = sale.SaleDate,
+                CustomerName = sale.CustomerName
             };
         }
 
-        public async Task<SaleDto> CreateSaleAsync(CreateSaleDto saleDto)
+        public async Task<SaleDto?> CreateSaleAsync(CreateSaleDto createSaleDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
-                // Calculate total amount and validate product quantities
-                decimal totalAmount = 0;
-                var saleItems = new List<SaleItem>();
+                // Check if product exists and has enough quantity
+                var product = await _context.Products.FindAsync(createSaleDto.ProductId);
+                if (product == null)
+                    throw new ArgumentException("Product not found");
 
-                foreach (var item in saleDto.Items)
-                {
-                    var product = await _context.Products.FindAsync(item.ProductId);
-                    if (product == null)
-                        throw new Exception($"Product with ID {item.ProductId} not found.");
+                if (product.Quantity < createSaleDto.QuantitySold)
+                    throw new InvalidOperationException("Insufficient product quantity");
 
-                    if (product.Quantity < item.Quantity)
-                        throw new Exception($"Insufficient quantity for product: {product.Name}. Available: {product.Quantity}, Requested: {item.Quantity}");
-
-                    decimal itemTotal = product.UnitPrice * item.Quantity;
-                    totalAmount += itemTotal;
-
-                    // Update product quantity
-                    product.Quantity -= item.Quantity;
-                    product.UpdatedAt = DateTime.UtcNow;
-
-                    // Create sale item
-                    var saleItem = new SaleItem
-                    {
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity,
-                        UnitPrice = product.UnitPrice,
-                        TotalPrice = itemTotal
-                    };
-
-                    saleItems.Add(saleItem);
-                }
-
-                // Create sale
+                // Create sale record
                 var sale = new Sale
                 {
-                    SaleDate = DateTime.UtcNow,
-                    CustomerName = saleDto.CustomerName,
-                    TotalAmount = totalAmount,
-                    Notes = saleDto.Notes,
-                    CreatedAt = DateTime.UtcNow,
-                    Items = saleItems
+                    ProductId = createSaleDto.ProductId,
+                    QuantitySold = createSaleDto.QuantitySold,
+                    UnitPrice = createSaleDto.UnitPrice,
+                    CustomerName = createSaleDto.CustomerName,
+                    SaleDate = DateTime.UtcNow
                 };
 
                 _context.Sales.Add(sale);
-                await _context.SaveChangesAsync();
 
+                // Update product quantity
+                product.Quantity -= createSaleDto.QuantitySold;
+
+                await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // Map to DTO
-                var result = new SaleDto
+                // Return the created sale
+                await _context.Entry(sale).Reference(s => s.Product).LoadAsync();
+
+                return new SaleDto
                 {
                     Id = sale.Id,
-                    SaleDate = sale.SaleDate,
-                    CustomerName = sale.CustomerName,
+                    ProductId = sale.ProductId,
+                    ProductName = sale.Product.Name,
+                    QuantitySold = sale.QuantitySold,
+                    UnitPrice = sale.UnitPrice,
                     TotalAmount = sale.TotalAmount,
-                    Notes = sale.Notes,
-                    Items = sale.Items.Select(si => new SaleItemDto
-                    {
-                        Id = si.Id,
-                        ProductId = si.ProductId,
-                        ProductName = si.Product.Name,
-                        Quantity = si.Quantity,
-                        UnitPrice = si.UnitPrice,
-                        TotalPrice = si.TotalPrice
-                    }).ToList()
+                    SaleDate = sale.SaleDate,
+                    CustomerName = sale.CustomerName
                 };
-
-                return result;
             }
-            catch (Exception)
+            catch
             {
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+
+        public async Task<IEnumerable<SaleDto>> GetSalesByProductIdAsync(int productId)
+        {
+            var sales = await _context.Sales
+                .Include(s => s.Product)
+                .Where(s => s.ProductId == productId)
+                .OrderByDescending(s => s.SaleDate)
+                .ToListAsync();
+
+            return sales.Select(s => new SaleDto
+            {
+                Id = s.Id,
+                ProductId = s.ProductId,
+                ProductName = s.Product.Name,
+                QuantitySold = s.QuantitySold,
+                UnitPrice = s.UnitPrice,
+                TotalAmount = s.TotalAmount,
+                SaleDate = s.SaleDate,
+                CustomerName = s.CustomerName
+            });
         }
     }
 }

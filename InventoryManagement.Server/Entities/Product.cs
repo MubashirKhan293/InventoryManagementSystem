@@ -1,13 +1,26 @@
-﻿namespace InventoryManagement.Server.Entities
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace InventoryManagement.Server.Entities
 {
     public class Product
     {
         public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
+
+        [Required]
+        [StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+
+        [StringLength(500)]
+        public string Description { get; set; } = string.Empty;
+
+        [Range(0, int.MaxValue)]
         public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+        // Navigation properties
+        public virtual ICollection<Sale> Sales { get; set; } = new List<Sale>();
+        public virtual ICollection<Purchase> Purchases { get; set; } = new List<Purchase>();
+
     }
 }
