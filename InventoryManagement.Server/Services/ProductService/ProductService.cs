@@ -88,17 +88,50 @@ namespace InventoryManagement.Server.Services.ProductService
 
         public async Task<bool> DeleteProductAsync(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return false;
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
-            return true;
+            try
+            {
+                var product = await _context.Products.FindAsync(id);
+                if (product == null)
+                {
+                    return false;
+                }
+
+                // Delete related sales first
+                var sales = await _context.Sales.Where(s => s.ProductId == id).ToListAsync();
+                if (sales.Any())
+                {
+                    _context.Sales.RemoveRange(sales);
+                }
+
+                // Delete related purchases
+                var purchases = await _context.Purchases.Where(p => p.ProductId == id).ToListAsync();
+                if (purchases.Any())
+                {
+                    _context.Purchases.RemoveRange(purchases);
+                }
+
+                // Finally delete the product
+                _context.Products.Remove(product);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
         }
 
-        public async Task<bool> ProductExistsAsync(int id)
+        public async Task<bool> ProductNameExistsAsync(string name)
         {
-            return await _context.Products.AnyAsync(p => p.Id == id);
+            var productExists = await _context.Products
+                          .AnyAsync(e => e.Name.ToLower() == name.ToLower());
+
+            return productExists;
         }
     }
 }

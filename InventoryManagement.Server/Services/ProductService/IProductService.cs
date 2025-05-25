@@ -9,6 +9,6 @@ namespace InventoryManagement.Server.Services.ProductService
         Task<ProductDto> CreateProductAsync(ProductInputDto createProductDto);
         Task<ProductDto?> UpdateProductAsync(int id, ProductInputDto updateProductDto);
         Task<bool> DeleteProductAsync(int id);
-        Task<bool> ProductExistsAsync(int id);
+        Task<bool> ProductNameExistsAsync(string name);
     }
 }

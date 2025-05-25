@@ -35,4 +35,9 @@ export class ProductService {
     const params = new HttpParams().set('id', id.toString());
     return this.http.delete<any>(`${this.APIUrl}/DeleteProduct`, { params });
   }
+
+  checkProductNameExists(name: string): Observable<boolean> {
+    const params = new HttpParams().set('name', name);
+    return this.http.get<boolean>(`${this.APIUrl}/ProductNameExistsAsync`, { params });
+  }
 }

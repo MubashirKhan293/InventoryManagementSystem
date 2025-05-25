@@ -1,146 +1,140 @@
-<!-- purchases.component.html -->
 <div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
-                    <!-- Purchases Table -->
-                    <div class="table-responsive">
-                        <ngx-datatable class="bootstrap" [rows]="filteredPurchases" [externalPaging]="false"
-                            [count]="totalElements" [offset]="currentPage" [limit]="pageSize"
-                            (page)="onPageChange($event)" [headerHeight]="50" [footerHeight]="50" [rowHeight]="50"
-                            [loadingIndicator]="false">
-
-                            <ngx-datatable-column name="ID" prop="id" [width]="80">
-                            </ngx-datatable-column>
-
-                            <ngx-datatable-column name="Product" prop="productName">
-                            </ngx-datatable-column>
-
-                            <ngx-datatable-column name="Supplier" prop="supplierName">
-                            </ngx-datatable-column>
-
-                            <ngx-datatable-column name="Quantity" prop="quantityPurchased" [width]="100">
-                            </ngx-datatable-column>
-
-                            <ngx-datatable-column name="Unit Price" [width]="120">
-                                <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
-                                    {{ row.unitPrice | currency }}
-                                </ng-template>
-                            </ngx-datatable-column>
-
-                            <ngx-datatable-column name="Total Amount" [width]="130">
-                                <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
-                                    <span class="fw-bold text-info">{{ row.totalAmount | currency }}</span>
-                                </ng-template>
-                            </ngx-datatable-column>
-
-                            <ngx-datatable-column name="Purchase Date" [width]="150">
-                                <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
-                                    {{ row.purchaseDate | date:'short' }}
-                                </ng-template>
-                            </ngx-datatable-column>
-                        </ngx-datatable>
-                    </div>
-                </div>
-            </div>
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+          <h4 class="mb-0"><i class="fas fa-truck me-2"></i>Purchases Management</h4>
+          <button class="btn btn-light btn-sm" (click)="onAddPurchase()">
+            <i class="fas fa-plus me-1"></i>Record Purchase
+          </button>
         </div>
-    </div>
-</div>
-<div>
-    <h4 class="mb-0"><i class="fas fa-truck me-2"></i>Purchases Management</h4>
-    <button class="btn btn-light btn-sm" (click)="onAddPurchase()">
-        <i class="fas fa-plus me-1"></i>Record Purchase
-    </button>
-</div>
-
-<div class="card-body">
-    <!-- Search Bar -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <div class="input-group">
+        
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" placeholder="Search purchases..." [(ngModel)]="searchTerm"
-                    (keyup)="onSearch()">
+                <input type="text" class="form-control shadow-none" placeholder="Search purchases..." 
+                       [(ngModel)]="searchTerm" (keyup)="onSearch()">
+              </div>
             </div>
-        </div>
-    </div>
+          </div>
 
-    <!-- Add Purchase Form -->
-    <div class="row mb-4" *ngIf="showAddForm">
-        <div class="col-12">
-            <div class="card bg-light">
+          <div class="row mb-4" *ngIf="showAddForm">
+            <div class="col-12">
+              <div class="card bg-light">
                 <div class="card-header">
-                    <h5 class="mb-0">Record New Purchase</h5>
+                  <h5 class="mb-0">Record New Purchase</h5>
                 </div>
                 <div class="card-body">
-                    <form #purchaseFormRef="ngForm" (ngSubmit)="onSubmit()">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">Product *</label>
-                                    <select class="form-select" [(ngModel)]="purchaseForm.productId" name="productId"
-                                        required #productId="ngModel">
-                                        <option value="0">Select Product</option>
-                                        <option *ngFor="let product of products" [value]="product.id">
-                                            {{ product.name }}
-                                        </option>
-                                    </select>
-                                    <div class="text-danger" *ngIf="productId.invalid && productId.touched">
-                                        Please select a product
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="mb-3">
-                                    <label class="form-label">Quantity *</label>
-                                    <input type="number" class="form-control"
-                                        [(ngModel)]="purchaseForm.quantityPurchased" name="quantityPurchased" required
-                                        min="1" #quantityPurchased="ngModel">
-                                    <div class="text-danger"
-                                        *ngIf="quantityPurchased.invalid && quantityPurchased.touched">
-                                        Valid quantity required
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="mb-3">
-                                    <label class="form-label">Unit Price *</label>
-                                    <input type="number" class="form-control" [(ngModel)]="purchaseForm.unitPrice"
-                                        name="unitPrice" required min="0.01" step="0.01" #unitPrice="ngModel">
-                                    <div class="text-danger" *ngIf="unitPrice.invalid && unitPrice.touched">
-                                        Valid price required
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">Supplier Name *</label>
-                                    <input type="text" class="form-control" [(ngModel)]="purchaseForm.supplierName"
-                                        name="supplierName" required #supplierName="ngModel">
-                                    <div class="text-danger" *ngIf="supplierName.invalid && supplierName.touched">
-                                        Supplier name is required
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="mb-3">
-                                    <label class="form-label">Total Amount</label>
-                                    <input type="text" class="form-control" [value]="calculateTotal() | currency"
-                                        readonly>
-                                </div>
-                            </div>
+                  <form #purchaseFormRef="ngForm" (ngSubmit)="onSubmit()">
+                    <div class="row">
+                      <div class="col-md-3">
+                        <div class="mb-3">
+                          <label class="form-label">Product *</label>
+                          <select class="form-select" [(ngModel)]="purchaseForm.productId" name="productId"
+                              required #productId="ngModel">
+                            <option value="0">Select Product</option>
+                            <option *ngFor="let product of products" [value]="product.id">
+                              {{ product.name }}
+                            </option>
+                          </select>
+                          <div class="text-danger" *ngIf="productId.invalid && productId.touched">
+                            Please select a product
+                          </div>
                         </div>
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-info text-white" [disabled]="!purchaseFormRef.valid">
-                                <i class="fas fa-save me-1"></i>Record Purchase
-                            </button>
-                            <button type="button" class="btn btn-secondary" (click)="cancelForm()">
-                                <i class="fas fa-times me-1"></i>Cancel
-                            </button>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="mb-3">
+                          <label class="form-label">Quantity *</label>
+                          <input type="number" class="form-control"
+                              [(ngModel)]="purchaseForm.quantityPurchased" name="quantityPurchased" required
+                              min="1" #quantityPurchased="ngModel">
+                          <div class="text-danger"
+                              *ngIf="quantityPurchased.invalid && quantityPurchased.touched">
+                            Valid quantity required
+                          </div>
                         </div>
-                    </form>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="mb-3">
+                          <label class="form-label">Unit Price *</label>
+                          <input type="number" class="form-control" [(ngModel)]="purchaseForm.unitPrice"
+                              name="unitPrice" required min="0.01" step="0.01" #unitPrice="ngModel">
+                          <div class="text-danger" *ngIf="unitPrice.invalid && unitPrice.touched">
+                            Valid price required
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-3">
+                        <div class="mb-3">
+                          <label class="form-label">Supplier Name *</label>
+                          <input type="text" class="form-control" [(ngModel)]="purchaseForm.supplierName"
+                              name="supplierName" required #supplierName="ngModel">
+                          <div class="text-danger" *ngIf="supplierName.invalid && supplierName.touched">
+                            Supplier name is required
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-2">
+                        <div class="mb-3">
+                          <label class="form-label">Total Amount</label>
+                          <input type="text" class="form-control" [value]="calculateTotal() | currency"
+                              readonly>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                      <button type="submit" class="btn btn-success" [disabled]="!purchaseFormRef.valid">
+                        <i class="fas fa-save me-1"></i>Record Purchase
+                      </button>
+                      <button type="button" class="btn btn-secondary" (click)="cancelForm()">
+                        <i class="fas fa-times me-1"></i>Cancel
+                      </button>
+                    </div>
+                  </form>
                 </div>
+              </div>
             </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered">
+              <thead class="table-dark">
+                <tr>
+                  <th scope="col" style="width: 80px;">ID</th>
+                  <th scope="col">Product</th>
+                  <th scope="col">Supplier</th>
+                  <th scope="col" style="width: 100px;">Quantity</th>
+                  <th scope="col" style="width: 120px;">Unit Price</th>
+                  <th scope="col" style="width: 130px;">Total Amount</th>
+                  <th scope="col" style="width: 150px;">Purchase Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let purchase of filteredPurchases; let i = index">
+                  <td>{{ purchase.id }}</td>
+                  <td class="fw-medium">{{ purchase.productName }}</td>
+                  <td>{{ purchase.supplierName }}</td>
+                  <td class="text-center">{{ purchase.quantityPurchased }}</td>
+                  <td>{{ purchase.unitPrice | currency }}</td>
+                  <td>
+                    <span class="fw-bold text-info">{{ purchase.totalAmount | currency }}</span>
+                  </td>
+                  <td>{{ purchase.purchaseDate | date:'short' }}</td>
+                </tr>
+                <tr *ngIf="filteredPurchases.length === 0">
+                  <td colspan="7" class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <br>
+                    No purchases found
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+      </div>
     </div>
+  </div>
+</div>

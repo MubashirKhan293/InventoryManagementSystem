@@ -4,6 +4,7 @@ import { ProductService } from '../../services/product.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ColumnMode, DatatableComponent, NgxDatatableModule, SelectionType, SortType } from '@swimlane/ngx-datatable';
 import { CommonModule } from '@angular/common';
+import { GeneralService } from '../../services/general.service';
 
 @Component({
   selector: 'app-products',
@@ -17,6 +18,7 @@ export class ProductsComponent {
   searchTerm: string = '';
   showAddForm: boolean = false;
   editingProduct: ProductDto | null = null;
+  productNameExists: boolean = false;
   
   productForm: ProductInputDto = {
     name: '',
@@ -29,14 +31,17 @@ export class ProductsComponent {
   pageSize = 10;
   totalElements = 0;
 
-  constructor(private productService: ProductService) {}
+  constructor(
+    private _productService: ProductService,
+    private _generalService: GeneralService
+  ) {}
 
   ngOnInit(): void {
     this.loadProducts();
   }
 
   loadProducts(): void {
-    this.productService.getAllProducts().subscribe({
+    this._productService.getAllProducts().subscribe({
       next: (data) => {
         this.products = data;
         this.filteredProducts = data;
@@ -77,7 +82,7 @@ export class ProductsComponent {
 
   onSubmit(): void {
     if (this.editingProduct) {
-      this.productService.updateProduct(this.editingProduct.id, this.productForm).subscribe({
+      this._productService.updateProduct(this.editingProduct.id, this.productForm).subscribe({
         next: () => {
           this.loadProducts();
           this.cancelForm();
@@ -85,7 +90,7 @@ export class ProductsComponent {
         error: (error) => console.error('Error updating product:', error)
       });
     } else {
-      this.productService.createProduct(this.productForm).subscribe({
+      this._productService.createProduct(this.productForm).subscribe({
         next: () => {
           this.loadProducts();
           this.cancelForm();
@@ -95,13 +100,23 @@ export class ProductsComponent {
     }
   }
 
-  onDeleteProduct(id: number): void {
-    if (confirm('Are you sure you want to delete this product?')) {
-      this.productService.deleteProduct(id).subscribe({
-        next: () => this.loadProducts(),
-        error: (error) => console.error('Error deleting product:', error)
-      });
+  async onDeleteProduct(productId: number, productName: string) {
+    const confirmed = await this._generalService.showConfirmationDialog(
+      'Confirm Deletion',
+      `Are you sure you want to delete "${productName}"? This will also delete all related sales and purchases.`,
+      'Yes, delete it!'
+    );
+
+    if (confirmed) {
+      this.deleteProduct(productId);
     }
+  }
+
+  deleteProduct(id: number): void {
+    this._productService.deleteProduct(id).subscribe({
+      next: () => this.loadProducts(),
+      error: (error) => console.error('Error deleting product:', error)
+    });
   }
 
   cancelForm(): void {
@@ -117,6 +132,24 @@ export class ProductsComponent {
       quantity: 0
     };
   }
+
+ checkProductNameExists(productName: string) {
+  if (!productName || productName.trim() === '') {
+    this.productNameExists = false;
+    return;
+  }
+
+  this._productService.checkProductNameExists(productName).subscribe({
+    next: (response: boolean) => {
+      this.productNameExists = response;
+      console.log("checking product name exists or not", response);
+    },
+    error: (error: any) => {
+      console.error("error validating product name", error);
+      this.productNameExists = false; // assume not exists on error
+    }
+  });
+}
 
   onPageChange(event: any): void {
     this.currentPage = event.offset;

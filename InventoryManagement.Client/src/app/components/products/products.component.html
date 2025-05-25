@@ -9,15 +9,14 @@
             <i class="fas fa-plus me-1"></i>Add Product
           </button>
         </div>
-        
+
         <div class="card-body">
-          <!-- Search Bar -->
           <div class="row mb-3">
             <div class="col-md-6">
               <div class="input-group">
                 <span class="input-group-text"><i class="fas fa-search"></i></span>
-                <input type="text" class="form-control" placeholder="Search products..." 
-                       [(ngModel)]="searchTerm" (keyup)="onSearch()">
+                <input type="text" class="form-control shadow-none" placeholder="Search products..."
+                  [(ngModel)]="searchTerm" (keyup)="onSearch()">
               </div>
             </div>
           </div>
@@ -35,25 +34,31 @@
                       <div class="col-md-4">
                         <div class="mb-3">
                           <label class="form-label">Product Name *</label>
-                          <input type="text" class="form-control" [(ngModel)]="productForm.name" 
-                                 name="name" required #name="ngModel">
+                          <input type="text" class="form-control" [(ngModel)]="productForm.name" name="name" required
+                            #name="ngModel" (keyup)="checkProductNameExists(productForm.name)"
+                            [class.is-invalid]="(name.invalid && name.touched) || productNameExists">
+
                           <div class="text-danger" *ngIf="name.invalid && name.touched">
                             Product name is required
+                          </div>
+
+                          <div class="text-danger" *ngIf="productNameExists && name.valid">
+                            Product with this name already exists
                           </div>
                         </div>
                       </div>
                       <div class="col-md-4">
                         <div class="mb-3">
                           <label class="form-label">Description</label>
-                          <input type="text" class="form-control" [(ngModel)]="productForm.description" 
-                                 name="description">
+                          <input type="text" class="form-control" [(ngModel)]="productForm.description"
+                            name="description">
                         </div>
                       </div>
                       <div class="col-md-4">
                         <div class="mb-3">
                           <label class="form-label">Quantity *</label>
-                          <input type="number" class="form-control" [(ngModel)]="productForm.quantity" 
-                                 name="quantity" required min="0" #quantity="ngModel">
+                          <input type="number" class="form-control" [(ngModel)]="productForm.quantity" name="quantity"
+                            required min="0" #quantity="ngModel">
                           <div class="text-danger" *ngIf="quantity.invalid && quantity.touched">
                             Valid quantity is required
                           </div>
@@ -61,7 +66,7 @@
                       </div>
                     </div>
                     <div class="d-flex gap-2">
-                      <button type="submit" class="btn btn-success" [disabled]="!productFormRef.valid">
+                      <button type="submit" class="btn btn-success" [disabled]="!productFormRef.valid || productNameExists">
                         <i class="fas fa-save me-1"></i>{{ editingProduct ? 'Update' : 'Save' }}
                       </button>
                       <button type="button" class="btn btn-secondary" (click)="cancelForm()">
@@ -76,60 +81,52 @@
 
           <!-- Products Table -->
           <div class="table-responsive">
-            <ngx-datatable
-              class="bootstrap"
-              [rows]="filteredProducts"
-              [externalPaging]="false"
-              [count]="totalElements"
-              [offset]="currentPage"
-              [limit]="pageSize"
-              (page)="onPageChange($event)"
-              [headerHeight]="50"
-              [footerHeight]="50"
-              [rowHeight]="50"
-              [loadingIndicator]="false">
-              
-              <ngx-datatable-column name="ID" prop="id" [width]="80">
-              </ngx-datatable-column>
-
-              <ngx-datatable-column name="Name" prop="name">
-              </ngx-datatable-column>
-
-              <ngx-datatable-column name="Description" prop="description">
-              </ngx-datatable-column>
-
-              <ngx-datatable-column name="Quantity" [width]="120">
-                <ng-template let-value="value" let-row="row" ngx-datatable-cell-template>
-                  <span class="badge" 
-                        [class.bg-danger]="value <= 5" 
-                        [class.bg-warning]="value > 5 && value <= 20" 
-                        [class.bg-success]="value > 20">
-                    {{ value }}
-                  </span>
-                </ng-template>
-              </ngx-datatable-column>
-
-              <ngx-datatable-column name="Created Date" [width]="150">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{ value | date:'short' }}
-                </ng-template>
-              </ngx-datatable-column>
-              
-              <ngx-datatable-column name="Actions" [canAutoResize]="false" [sortable]="false" [width]="150">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" (click)="onEditProduct(row)" 
-                            title="Edit">
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-outline-danger" (click)="onDeleteProduct(row.id)" 
-                            title="Delete">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </div>
-                </ng-template>
-              </ngx-datatable-column>
-            </ngx-datatable>
+            <table class="table table-striped table-hover table-bordered">
+              <thead class="table-dark">
+                <tr>
+                  <th scope="col" style="width: 80px;">ID</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Description</th>
+                  <th scope="col" style="width: 120px;">Quantity</th>
+                  <th scope="col" style="width: 180px;">Created Date</th>
+                  <th scope="col" style="width: 150px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of filteredProducts; let i = index">
+                  <td>{{ product.id }}</td>
+                  <td class="fw-medium">{{ product.name }}</td>
+                  <td>{{ product.description }}</td>
+                  <td class="text-center">
+                    <span class="badge" [class.bg-danger]="product.quantity <= 5"
+                      [class.bg-warning]="product.quantity > 5 && product.quantity <= 20"
+                      [class.bg-success]="product.quantity > 20">
+                      {{ product.quantity }}
+                    </span>
+                  </td>
+                  <td>{{ product.createdDate | date:'short' }}</td>
+                  <td>
+                    <div class="btn btn-sm" role="group">
+                      <button type="button" class="btn btn-outline-primary me-2" (click)="onEditProduct(product)"
+                        title="Edit Product">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-danger"
+                        (click)="onDeleteProduct(product.id, product.name)" title="Delete Product">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredProducts.length === 0">
+                  <td colspan="6" class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <br>
+                    No products found
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

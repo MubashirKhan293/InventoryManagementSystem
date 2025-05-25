@@ -58,5 +58,12 @@ namespace InventoryManagement.Server.Controllers
 
             return Ok(new { success = true, message = "Product deleted successfully" });
         }
+
+        [HttpGet("ProductNameExistsAsync")]
+        public async Task<bool> ProductNameExistsAsync(string email)
+        {
+            var exists = await _productService.ProductNameExistsAsync(email);
+            return exists;
+        }
     }
 }
