@@ -88,8 +88,6 @@ namespace InventoryManagement.Server.Services.ProductService
 
         public async Task<bool> DeleteProductAsync(int id)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
                 var product = await _context.Products.FindAsync(id);
@@ -98,30 +96,13 @@ namespace InventoryManagement.Server.Services.ProductService
                     return false;
                 }
 
-                // Delete related sales first
-                var sales = await _context.Sales.Where(s => s.ProductId == id).ToListAsync();
-                if (sales.Any())
-                {
-                    _context.Sales.RemoveRange(sales);
-                }
-
-                // Delete related purchases
-                var purchases = await _context.Purchases.Where(p => p.ProductId == id).ToListAsync();
-                if (purchases.Any())
-                {
-                    _context.Purchases.RemoveRange(purchases);
-                }
-
-                // Finally delete the product
                 _context.Products.Remove(product);
-
                 await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
                 return true;
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
+                // Log the exception if you have logging
                 return false;
             }
         }

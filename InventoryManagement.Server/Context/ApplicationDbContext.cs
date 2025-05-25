@@ -38,7 +38,7 @@ namespace InventoryManagement.Server.Context
                 entity.HasOne(e => e.Product)
                       .WithMany(p => p.Sales)
                       .HasForeignKey(e => e.ProductId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // Purchase configuration
@@ -52,36 +52,9 @@ namespace InventoryManagement.Server.Context
                 entity.HasOne(e => e.Product)
                       .WithMany(p => p.Purchases)
                       .HasForeignKey(e => e.ProductId)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Seed data
-            modelBuilder.Entity<Product>().HasData(
-                new Product
-                {
-                    Id = 1,
-                    Name = "Laptop",
-                    Description = "Gaming laptop with high performance",
-                    Quantity = 10,
-                    CreatedDate = DateTime.UtcNow
-                },
-                new Product
-                {
-                    Id = 2,
-                    Name = "Mouse",
-                    Description = "Wireless optical mouse",
-                    Quantity = 50,
-                    CreatedDate = DateTime.UtcNow
-                },
-                new Product
-                {
-                    Id = 3,
-                    Name = "Keyboard",
-                    Description = "Mechanical gaming keyboard",
-                    Quantity = 30,
-                    CreatedDate = DateTime.UtcNow
-                }
-            );
         }
     }
 }

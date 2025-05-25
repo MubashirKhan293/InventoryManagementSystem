@@ -60,9 +60,9 @@ namespace InventoryManagement.Server.Controllers
         }
 
         [HttpGet("ProductNameExistsAsync")]
-        public async Task<bool> ProductNameExistsAsync(string email)
+        public async Task<bool> ProductNameExistsAsync(string name)
         {
-            var exists = await _productService.ProductNameExistsAsync(email);
+            var exists = await _productService.ProductNameExistsAsync(name);
             return exists;
         }
     }
