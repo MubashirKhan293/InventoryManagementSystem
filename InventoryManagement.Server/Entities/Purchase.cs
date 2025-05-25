@@ -19,7 +19,6 @@ namespace InventoryManagement.Server.Entities
 
         public DateTime PurchaseDate { get; set; } = DateTime.UtcNow;
 
-        [StringLength(200)]
         public string SupplierName { get; set; } = string.Empty;
 
         // Navigation property
